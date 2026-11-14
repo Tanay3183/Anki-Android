@@ -4,18 +4,15 @@ package com.ichi2.anki.deckpicker
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -111,25 +108,11 @@ fun DeckPickerFabMenu(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            AnimatedVisibility(
-                visible = expanded,
-                enter =
-                    fadeIn(animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)) +
-                        slideInHorizontally(
-                            initialOffsetX = { fullWidth -> fullWidth * 2 / 3 },
-                            animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-                        ),
-                exit =
-                    fadeOut(animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing)) +
-                        slideOutHorizontally(
-                            targetOffsetX = { fullWidth -> fullWidth * 2 / 3 },
-                            animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-                        ),
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
+                StaggeredFabMenuItem(visible = expanded, indexFromBottom = 3) {
                     DeckPickerFabMenuItem(
                         text = stringResource(CommonR.string.menu_get_shared_decks),
                         iconRes = R.drawable.ic_file_download_white,
@@ -138,6 +121,8 @@ fun DeckPickerFabMenu(
                             onAddSharedDeck()
                         },
                     )
+                }
+                StaggeredFabMenuItem(visible = expanded, indexFromBottom = 2) {
                     DeckPickerFabMenuItem(
                         text = stringResource(CommonR.string.new_dynamic_deck),
                         iconRes = R.drawable.ic_add_filtered_deck,
@@ -146,6 +131,8 @@ fun DeckPickerFabMenu(
                             onAddFilteredDeck()
                         },
                     )
+                }
+                StaggeredFabMenuItem(visible = expanded, indexFromBottom = 1) {
                     DeckPickerFabMenuItem(
                         text = createDeckLabel,
                         iconRes = R.drawable.ic_add_deck_filled,
@@ -154,6 +141,8 @@ fun DeckPickerFabMenu(
                             onCreateDeck()
                         },
                     )
+                }
+                StaggeredFabMenuItem(visible = expanded, indexFromBottom = 0) {
                     DeckPickerFabMenuItem(
                         text = stringResource(CommonString.menu_add),
                         iconRes = R.drawable.ic_add_note,
@@ -165,67 +154,93 @@ fun DeckPickerFabMenu(
                 }
             }
 
-            val fabSize by animateDpAsState(
-                targetValue = if (expanded) 56.dp else 72.dp,
-                animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-                label = "fab_size",
-            )
             val cornerRadius by animateDpAsState(
-                targetValue = if (expanded) 28.dp else 20.dp,
+                targetValue = if (expanded) 28.dp else 16.dp,
                 animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
                 label = "fab_corner_radius",
             )
-            val iconSize by animateDpAsState(
-                targetValue = if (expanded) 24.dp else 30.dp,
-                animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-                label = "fab_icon_size",
+            val iconRotation by animateFloatAsState(
+                targetValue = if (expanded) 45f else 0f,
+                animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
+                label = "fab_icon_rotation",
             )
 
-            Box(
-                modifier = Modifier.size(72.dp),
-                contentAlignment = Alignment.TopEnd,
+            FloatingActionButton(
+                onClick = { onExpandedChange(!expanded) },
+                shape = RoundedCornerShape(cornerRadius),
+                containerColor = MaterialTheme.ankiColors.fabContainer,
+                contentColor = MaterialTheme.ankiColors.onFab,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
+                modifier = Modifier.size(56.dp),
             ) {
-                FloatingActionButton(
-                    onClick = { onExpandedChange(!expanded) },
-                    shape = RoundedCornerShape(cornerRadius),
-                    containerColor = MaterialTheme.ankiColors.fabContainer,
-                    contentColor = MaterialTheme.ankiColors.onFab,
-                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
-                    modifier = Modifier.size(fabSize),
-                ) {
-                    AnimatedContent(
-                        targetState = expanded,
-                        transitionSpec = {
-                            (
-                                fadeIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) +
-                                    scaleIn(initialScale = 0.8f, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
-                            ).togetherWith(
-                                fadeOut(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)) +
-                                    scaleOut(
-                                        targetScale = 0.8f,
-                                        animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
-                                    ),
-                            )
+                Icon(
+                    painter = painterResource(CommonR.drawable.ic_add),
+                    contentDescription =
+                        if (expanded) {
+                            stringResource(CommonString.dialog_cancel)
+                        } else {
+                            stringResource(CommonString.menu_add)
                         },
-                        label = "fab_icon_transition",
-                    ) { isExpanded ->
-                        Icon(
-                            painter = painterResource(CommonR.drawable.ic_add),
-                            contentDescription =
-                                if (isExpanded) {
-                                    stringResource(CommonString.dialog_cancel)
-                                } else {
-                                    stringResource(CommonString.menu_add)
-                                },
-                            modifier =
-                                Modifier
-                                    .size(iconSize)
-                                    .rotate(if (isExpanded) 45f else 0f),
-                        )
-                    }
-                }
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .rotate(iconRotation),
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun StaggeredFabMenuItem(
+    visible: Boolean,
+    indexFromBottom: Int,
+    totalItems: Int = 4,
+    content: @Composable () -> Unit,
+) {
+    val enterDelay = indexFromBottom * 40
+    val exitDelay = (totalItems - 1 - indexFromBottom) * 30
+
+    AnimatedVisibility(
+        visible = visible,
+        enter =
+            fadeIn(
+                animationSpec =
+                    tween(
+                        durationMillis = 200,
+                        delayMillis = enterDelay,
+                        easing = FastOutSlowInEasing,
+                    ),
+            ) +
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth * 2 / 3 },
+                    animationSpec =
+                        tween(
+                            durationMillis = 250,
+                            delayMillis = enterDelay,
+                            easing = FastOutSlowInEasing,
+                        ),
+                ),
+        exit =
+            fadeOut(
+                animationSpec =
+                    tween(
+                        durationMillis = 150,
+                        delayMillis = exitDelay,
+                        easing = FastOutSlowInEasing,
+                    ),
+            ) +
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth * 2 / 3 },
+                    animationSpec =
+                        tween(
+                            durationMillis = 150,
+                            delayMillis = exitDelay,
+                            easing = FastOutSlowInEasing,
+                        ),
+                ),
+    ) {
+        content()
     }
 }
 
